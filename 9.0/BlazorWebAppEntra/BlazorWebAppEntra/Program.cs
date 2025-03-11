@@ -1,5 +1,6 @@
 using BlazorWebAppEntra.Client.Weather;
 using BlazorWebAppEntra.Components;
+using BlazorWebAppEntra.Helpers;
 using BlazorWebAppEntra.Weather;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,17 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
 
+var tenantId = builder.Configuration.GetValue<string>("AzureAd:TenantId")!;
+var vaultUri = builder.Configuration.GetValue<string>("AzureAd:VaultUri")!;
+var secretName = builder.Configuration.GetValue<string>("AzureAd:SecretName")!;
+
+builder.Services.Configure<MicrosoftIdentityOptions>(
+    OpenIdConnectDefaults.AuthenticationScheme,
+    options =>
+    {
+        options.ClientSecret =
+            AzureHelper.GetKeyVaultSecret(tenantId, vaultUri, secretName);
+    });
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 builder.Services.AddAuthorization();
